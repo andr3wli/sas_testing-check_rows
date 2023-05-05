@@ -1,0 +1,743 @@
+---
+# title: "Introduction to testing in SAS"
+# author: "Andrew Li"
+format: 
+  revealjs:
+    include-in-header: header.html
+    css: style.css
+    theme: simple 
+    slide-number: true
+    code-link: true
+    preview-links: auto
+    footer: "Source code for these slides can be found on [GitHub]()"
+#editor: visual
+execute:
+  echo: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+## Introduction to Testing in SAS with `%check_rows` {style="margin-top: 2em; margin-bottom: 1em;"}
+
+<!--NOTE: Do NOT render this file - go to render.R -->
+
+::: {style="margin-top: 1em; margin-bottom: 1em; font-size: 1em"}   
+
+Andrew Li & Mike Atkinson
+
+![](media/intro_meme.jpg){.absolute width="400" height="400" right="40" top="175"}
+:::
+
+## Unit testing 
+
+Unit tests compare the *expected* output with the *actual* output. 
+
+`{SASUnit}` and `{FUTS}` are popular frameworks for writing unit tests in SAS. 
+
+<br>
+
+**"A unit test provides a strict, written contract that the piece of code must satisfy"**
+\- Wikipedia
+
+## Benefits of unit testing {.smaller}
+
+As a SAS programmer/analyst, you should consider implementing tests in your workflow. 
+
+::: incremental
+
+- Problems are found early in the development cycle 
+- Increased confidence when making changes - insures against unintentionally changing code behaviour
+  - changes can be tests any time easily 
+- Can document the functionality of the program 
+- Prevents re-introducing already fixed bugs
+- etc.
+
+::: 
+
+## When do we need tests? {.smaller}
+
+There are two main applications of SAS: 
+
+. . .
+
+:::: {.columns}
+
+::: {.column width='50%'}
+
+**One off Programs** 
+
+::: {.incremental}
+
+- Tests are often informal and not reproducible 
+- Checking the log
+- Comparing results with what we need
+- Tracking tables 
+
+:::
+
+:::
+
+::: {.column width='50%'}
+
+**Standardized and Resuable Programs **
+
+::: {.incremental}
+
+- Macros or Programs used in different reports or studies 
+- It needs to work with different data and parameters 
+- *In this case, tests should be included!* 
+
+:::
+
+:::
+
+::::
+
+. . .
+
+# Introduction to `%check_rows();` 
+
+Perform a check on table(s) row counts using the expression provided.
+
+<br>
+
+. . .
+
+```{eval=FALSE, class='SAS'}
+%check_rows(expr, severity = error); 
+```
+
+. . .
+
+## Expression {.smaller}
+
+The expression `{expr}` parameter captures what you expect the rows to actually be.
+
+| expected   | actual   | tests |
+| :--------: | :------: | :-----: |
+| {{< fa regular file-lines size=2xl >}} | {{< fa regular file-lines size=2xl >}} | {{< fa regular circle-check size=2xl >}} |
+| {{< fa regular file-lines size=2xl >}} | {{< fa regular file-code size=2xl >}}  | {{< fa regular circle-xmark size=2xl >}} |
+
+. . .
+
+<br>
+
+`%check_rows` compares the expected value with actual value of row counts.
+
+| description | expected | actual | tests |  
+|:--------: | :---: | :---: | :---: |
+| number of observations in `mylib.clinics` | 20       | 20       | {{< fa regular circle-check size=2xl >}} |  
+| number of observations in `mylib.clincs`  | 20       | 19       | {{< fa regular circle-xmark size=2xl >}} | 
+. . .
+
+## Expression rules {.smaller}
+
+::: {.callout-tip}
+
+## Valid expressions 
+
+- The expression parameter must contain a comparison operator and only table names.
+  - Accepted comparison operators:  `=, <>, >=, <=, >, <`
+
+- The "left hand side" of the operator allows for a table name with optional schema prefix followed by an optional valid arithmetic operator and another table name with optional schema prefix. 
+  - Accepted arithmetic operators:  `+, -, *`
+
+- The "right hand side" of the operator follows same regular expression rules.
+
+```{eval=FALSE, class='SAS'}
+%check_rows(%str(table_1 = table_2));
+%check_rows(%str(table_1 + table_2 = table_3));
+%check_rows(%str(table_1 + table_2 = table_3 + table_4));
+%check_rows(%str(mylib.all = details + mylib2.summary));
+```
+
+:::
+
+. . .
+
+:::{.callout-important}
+
+## Invalid Expressions
+
+- Is not a valid library name or table name.
+
+- Contains more then one or is missing a comparison operator.
+
+```{eval=FALSE, class='SAS'}
+%check_rows(%str(1_table_1 = table_2));     /* Invalid table name */
+%check_rows(%str(table_1 <= 2mylib.sales)); /* Invalid library name */
+%check_rows(%str(table_1 0));               /* Missing comparison operator */
+%check_rows(%str(table_1 >= 50 // 3));      /* Invalid arithmetic operator */
+```
+
+:::
+
+. . .
+
+## Sending mixed signals {.smaller}
+
+:::: {.columns}
+
+::: {.column width='10%'}
+
+<br>
+
+```{r, eval=TRUE, echo=FALSE}
+knitr::include_graphics("media/warning.png")
+```
+
+:::
+
+::: {.column width='90%'}
+
+:::{.callout-note}
+
+## Types of messages/exceptions
+
+
+| Condition | Severity       |                         Meaning                          |
+| :-------: | :------------: | :------------------------------------------------------: |
+| `note`    |   low          | execution was successful but returns additional information  |
+| `warning` |  medium        | execution encountered some problem but the job was run      |
+| `error`   |   high         | execution was stopped as there was no way to continue |
+| `abend`   |   very high    | execution was stopped and aborted |
+
+:::
+
+:::
+
+::::
+
+- Notes are the most innocuous messages in SAS - they simply inform you of the status of the program.
+- Warnings are less dire than errors but goes ahead and runs the program anyways. Some warnings are harmless, but some indicate grave problems. 
+- Errors bring programs to a halt and you *must* attend to them. 
+- Abend is not actually an SAS message but it is a possible parameter in the macro. This will throw an error *and* abort the program.
+
+## Generate example tables 
+```{eval=FALSE, class='SAS'}
+data one 
+	 two 
+	 bad_records
+	 good_records;
+	do i = 1 to 89;
+		if (i <= 20) then output one;
+		if (i <= 20) then output two;
+		if (i <= 2) then output bad_records;
+		if (i <= 100) then output good_records;
+	end;
+	stop;
+run;
+	 
+/* table `one` has 20 rows */
+/* table `two` has 20 rows */
+/* table `bad_records` has 2 rows */
+/* table `good_records` has 89 rows */
+```
+
+## Severity parameter {.smaller}
+
+The default value for severity param is to throw an error. 
+
+:::: {.columns}
+
+::: {.column width='50%'}
+
+```{eval=FALSE, class='SAS'}
+/* example of a passed test  */
+/* severity set to default */
+%check_rows(%str(one = two));
+```
+
+:::
+
+::: {.column width='50%'}
+
+```{eval=FALSE, class='SAS'}
+NOTE: check_rows: Success!
+NOTE: check_rows: one = two
+NOTE: check_rows: 20 = 20
+```
+
+:::
+
+::::
+
+. . .
+
+
+. . .
+
+<br>
+
+The code can continue if you set `severity = warning`.  
+
+:::: {.columns}
+
+::: {.column width='50%'}
+
+```{eval=FALSE, class='SAS'}
+/* example of a failed test with a warning */
+%check_rows(%str(bad_records = 0), 
+            severity = warning);
+```
+
+:::
+
+::: {.column width='50%'}
+
+```{eval=FALSE, class='SAS'}
+WARNING: check_rows: Expression Failed!
+WARNING: check_rows: Not True: bad_records = 0 
+WARNING: check_rows: Not True: 2 = 0
+```
+
+:::
+
+::::
+
+. . .
+
+. . .
+
+<br>
+
+The same test case will fail if the severity param is set to the default value.
+
+:::: {.columns}
+
+::: {.column width='50%'}
+
+```{eval=FALSE, class='SAS'}
+/* example of a failed test with an error */
+/* severity set to default */
+%check_rows(%str(bad_records = 0));
+```
+
+:::
+
+::: {.column width='50%'}
+
+```{eval=FALSE, class='SAS'}
+ERROR: check_rows: Expression Failed!
+ERROR: check_rows: Not True: bad_records = 0
+ERROR: check_rows: Not True: 2 = 0
+```
+
+:::
+
+::::
+
+. . .
+
+## Severity set to abend {.smaller}
+
+Although `abend` is not a real SAS message, it is an option for `%check_rows();`
+
+. . .
+
+:::{.callout-important}
+
+## Be careful when using abend
+
+If severity is set to abend and the test fails, it will stop processing immediately and terminate your SAS Enterprise Guide/Studio.  
+
+Thus, it is **crucial** that you are careful when using abend.  
+
+:::
+
+. . .
+
+. . .
+
+:::{.callout-tip}
+
+## Use abend selectively
+
+It is worthwhile to use abend in automated SAS programs becuase you want the failure to grab your attention.
+
+:::
+
+. . .
+
+## A simple example {.smaller}
+
+In this example, we get excel data from clinics to update our database.  
+
+```{eval=FALSE, class='SAS'}
+%let clinic_number = 123 456 789 888; 
+
+%macro read_excel;
+%do i = 1 %to %sysfunc(countw(&clinic_number)); 
+    %let num = %scan(&clinic_number, &i); 
+    proc import dbms = xlsx
+        out = clinic_&num.
+        file = "data/clinic_&num..xlsx"
+        REPLACE;
+    run;
+%end;
+%mend;
+%read_excel; 
+
+/* make sure the datasets imported are good */
+%check_rows(%str(clinic_123 > 100), severity = warning);
+%check_rows(%str(clinic_456 > 100), severity = warning);
+```
+
+```{eval=FALSE, class='SAS'}
+/* concatenate the newly imported tables */
+data all_clinics;
+  set clinic_123 clinic_456 clinic_789 clinic_888;
+run;
+```
+
+. . .
+
+Now, we can include tests to make sure that `all_clinics` is what we think it is.
+
+```{eval=FALSE, class='SAS'}
+%check_rows(%str(clinic_123 + clinic_456 + clinic_789 + clinic_888 = all_clinics));
+%check_rows(%str(all_clinics = 0), severity = abend);
+```
+. . .
+
+## Another simple example {.smaller}
+
+We need to divide $25,000 between practitioners based on total complexity.
+
+```{eval=FALSE, class='SAS'}
+%let tot_funds = 25000; 
+proc sql;
+	create table prac_tot as
+	select sum(total_complexity) as tot_total_complexity
+	from prac_list;
+quit;
+
+/* Calculate total for each practitioner */
+data prac_funding;
+	drop tot_total_complexity;
+	if (_n_ = 1) then set prac_tot;
+	set prac_list;
+	prac_funding = round(product(tot_funds, total_complexity / tot_total_complexity), 0.01);
+run;
+```
+:::: {.columns}
+
+::: {.column width='50%'}
+
+`prac_list`
+```{r eval=TRUE, echo=FALSE}
+data.frame(pracnum  = c("A5234", "B2519", "C6868", "D5261", "E1801", "F9182", "G8123", "H6010"),
+            total_complexity = c(1317.7, 1457.2, 1145.2, 1004.5, 1258.7, 1332.2, 994.1, 1011.0))
+```
+
+:::
+
+::: {.column width='50%'}
+
+`prac_funding`
+```{r eval=TRUE, echo=FALSE}
+data.frame(pracnum  = c("A5234", "B2519", "C6868", "D5261", "E1801", "F9182", "G8123", "H6010"),
+            total_complexity = c(1317.7, 1457.2, 1145.2, 1004.5, 1258.7, 1332.2, 994.1, 1011.0),
+            prac_funding = c(3460.13, 3826.44, 3007.16, 2637.7, 3305.2, 3498.2, 2610.39, 2654.77))
+```
+
+:::
+
+::::
+
+. . .
+
+*But, there is a not so obvious problem*
+
+. . .
+
+## The not so obvious problem {.smaller}
+
+The previous workflow resulted in a very minor but important error. The total allocation does *not* equal to $25,000. Here is a rewrite of the previous code that includes a check.
+
+```{eval=FALSE, class='SAS'}
+%let tot_funds = 25000; 
+data prac_funding   (drop=check_prac_tot)
+	 total_not_match  (keep=check_prac_tot);
+
+	drop tot_total_complexity;
+	retain check_prac_tot  0;
+
+	if (_n_ = 1) then set prac_tot;
+	set prac_list  end=eof;
+	prac_funding = round(product(tot_funds, total_complexity / tot_total_complexity), 0.01);
+	check_prac_tot + prac_funding;
+	output prac_funding;
+
+	if (eof) then do;
+		if (check_prac_tot ne &tot_funds) then output total_not_match;
+	end;
+run;
+
+%check_rows(%str(total_not_match = 0));
+```
+
+. . .
+
+:::: {.columns}
+
+::: {.column width='50%'}
+
+`total_not_match`
+
+```{r eval=TRUE, echo=FALSE}
+data.frame(check_prac_tot = 24999.99)
+```
+
+
+:::
+
+::: {.column width='50%'}
+
+```{eval=FALSE, class='SAS'}
+ERROR: check_rows: Expression Failed!
+ERROR: check_rows: Not True: total_not_match = 0
+ERROR: check_rows: Not True: 1 = 0
+```
+
+:::
+
+::::
+
+. . .
+
+## Missing rows for by variable in merge {.smaller}
+
+Combining datasets is a very common step. Consider the following tables: 
+
+:::: {.columns}
+
+::: {.column width='50%'}
+
+```{r eval=TRUE, echo=FALSE}
+data.frame(pracnum  = c("A5234", "B2519", "C6868", "D5261"),
+           complexity_score = c(78, 90, 85, 40))
+```
+
+:::
+
+::: {.column width='50%'}
+
+```{r eval=TRUE, echo=FALSE}
+data.frame(pracnum  = c("A5234", "B2519", "C6868", "D5261", "E1801", "F9182"),
+            rate_score = c(1317.7, 1457.2, 1145.2, 1004.5, 1258.7, 1332.2))
+```
+
+:::
+
+::::
+
+. . .
+
+When we merge the two datasets the resulting table will have missing values. This may cause unexpected results *and* SAS does not let you know this occured.
+
+:::: {.columns}
+
+::: {.column width='50%'}
+
+```{eval=FALSE, class='SAS'}
+/* Merge the two data sets */
+data final;
+  merge complexity_table rate_table;
+  by pracnum;
+run;
+```
+
+:::
+
+::: {.column width='50%'}
+
+```{r eval=TRUE, echo=FALSE}
+data.frame(pracnum  = c("A5234", "B2519", "C6868", "D5261", "E1801", "F9182"),
+            complexity_score = c("78", "90", "85", "40", ".", "."),
+            rate_score = c(1317.7, 1457.2, 1145.2, 1004.5, 1258.7, 1332.2))
+```
+
+:::
+
+::::
+
+. . .
+
+. . .
+
+Consider adding a test for this common pitfall.
+
+```{eval=FALSE, class='SAS'}
+%check_rows(%str(final = complexity_table), severity = warning);
+```
+
+```{eval=FALSE, class='SAS'}
+WARNING: check_rows: Expression Failed!
+WARNING: check_rows: Not True: final = complexity_table 
+WARNING: check_rows: Not True: 6 = 4
+```
+
+. . .
+
+## Duplicate by values {.smaller}
+
+The `complexity_table` has duplicate values.
+
+:::: {.columns}
+
+::: {.column width='50%'}
+
+```{r eval=TRUE, echo=FALSE}
+data.frame(pracnum  = c("A5234", "B2519", "B2519", "B2519"),
+           complexity_score = c(78, 90, 85, 40))
+```
+
+:::
+
+::: {.column width='50%'}
+
+```{r eval=TRUE, echo=FALSE}
+data.frame(pracnum  = c("A5234", "B2519"),
+            rate_score = c(1317.7, 1457.2))
+```
+
+:::
+
+::::
+
+. . .
+
+When you merge these two datasets, we get additional observations. Again, this may cause unexpected results *and* SAS does not let you know this occured.
+
+:::: {.columns}
+
+::: {.column width='50%'}
+
+```{eval=FALSE, class='SAS'}
+/* Merge the two data sets */
+data combined_table;
+  merge complexity_table rate_table;
+  by pracnum;
+run;
+```
+
+:::
+
+::: {.column width='50%'}
+
+```{r eval=TRUE, echo=FALSE}
+data.frame(pracnum  = c("A5234", "B2519", "B2519", "B2519"),
+            complexity_score = c(78, 90, 85, 40),
+            rate_score = c(1317.7, 1457.2, 1457.2, 1457.2))
+```
+
+:::
+
+::::
+
+. . .
+
+. . .
+
+Again, consider adding tests for this common pitfall.
+
+```{eval=FALSE, class='SAS'}
+%check_rows(%str(combined_table = rate_table));
+```
+
+```{eval=FALSE, class='SAS'}
+ERROR: check_rows: Expression Failed!
+ERROR: check_rows: Not True: combined_table = rate_table 
+ERROR: check_rows: Not True: 4 = 3
+```
+
+. . .
+
+## Missing values {.smaller}
+
+Getting the sum when a variable is missing leads to the resultant being missing as well. Again, SAS does not let you know this occured. 
+
+
+```{eval=FALSE, class='SAS'}
+data total_num_prac; 
+  interior_prac = .; fraser_health_prac = 8790; northern_health_prac = 9896;
+  total_prac = interior_prac + fraser_health_prac + northern_health_prac;
+run;
+```
+
+```{r eval=TRUE, echo=FALSE}
+data.frame(interior_prac  = ".",
+            fraser_health_prac = "8790",
+            northern_health_prac = "9896",
+            total_prac = ".")
+```
+
+. . .
+
+In this case, we can create a new table that only contains missing values and then perform a test on this new table.
+
+```{eval=FALSE, class='SAS'}
+proc sql;
+  create table missing_values_tbl as
+  select total_prac
+  from total_num_prac
+  where total_prac is missing;
+quit;
+
+%check_rows(%str(missing_values_tbl = 0))
+```
+
+```{eval=FALSE, class='SAS'}
+ERROR: check_rows: Expression Failed!
+ERROR: check_rows: Not True: missing_values_tbl = 0 
+ERROR: check_rows: Not True: 1 = 0
+```
+
+. . .
+
+## Installation {.smaller}
+
+If you are with the Ministry of Health, you already have access to this macro via SAS without installation!
+
+If you are not a Ministry of Health, you will need to install it via [GitHub](https://github.com/andr3wli/testmacrolib). 
+
+```{zsh}
+# clone the forked repo into your computer 
+git clone https://github.com/andr3wli/testmacrolib.git
+```
+
+<br>
+
+After you have downloaded the repo locally (somewhere SAS can access), update the sasautos to the correct path.
+
+```{eval=FALSE, class='SAS'}
+options insert=(sasautos="/Desktop/testmacrolib/check");
+```
+
+# Find me here 👇
+<!-- Need to install fontawesome extension for quartro: https://github.com/quarto-ext/fontawesome -->
+<!-- Note: will need at least quarto version 1.2.198 -->
+
+{{< fa solid envelope >}} [Email](mailto:andrew.li@gov.bc.ca){target="_blank"}
+
+{{< fa brands twitter >}} [Twitter](http://twitter.com/drewroc6){target="_blank"}
+
+{{< fa brands linkedin >}} [LinkedIn](https://ca.linkedin.com/in/andrew-li-781011240){target="_blank"}
+
+{{< fa brands github >}} [GitHub](https://github.com/andr3wli){target="_blank"}
+
+{{< fa solid link >}} [Website](https://www.andrewcli.com/){target="_blank"}
+
+# Thank You! 
+
+Questions? 😊
+
+## Session information {.smaller}
+
+```{r eval=TRUE}
+quarto::quarto_version()
+sessioninfo::session_info(include_base = TRUE)
+```

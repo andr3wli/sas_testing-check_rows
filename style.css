@@ -1,0 +1,96 @@
+
+.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 0.5em;
+  background: #333;
+  color: white;
+}
+
+.hljs-name,
+.hljs-strong {
+  font-weight: bold;
+}
+
+.hljs-code,
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-tag {
+  color: #62c8f3;
+}
+
+.hljs-variable,
+.hljs-template-variable,
+.hljs-selector-id,
+.hljs-selector-class {
+  color: #000000;
+}
+
+.hljs-string,
+.hljs-bullet {
+  color: #000000;
+}
+
+/*sas keyowrds*/
+.hljs-type,
+.hljs-title,
+.hljs-section,
+.hljs-attribute,
+.hljs-quote,
+.hljs-built_in,
+.hljs-builtin-name {
+  color: #0000ff;
+}
+
+.hljs-number,
+.hljs-symbol,
+.hljs-bullet {
+  color: #d36363;
+}
+
+/*SAS steps*/
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal {
+  color: #000080;
+  font-weight: bold;
+}
+
+/*commets*/
+.hljs-comment,
+.hljs-deletion,
+.hljs-code {
+  color: #008000;
+}
+
+.hljs-regexp,
+.hljs-link {
+  color: #c6b4f0;
+}
+
+/*macro var SAS_MACRO_MODE*/
+.hljs-meta {
+  color: #0000ff;
+}
+
+/* SAS Log output syntax highlighting */
+.hljs-error {
+  color: #ff0000;
+}
+
+.hljs-warning {
+  color: #008080;
+}
+
+.hljs-note {
+  color: #008000;
+}
+
+/* additional stuff */
+.footer > p {
+  font-size: 10px;
+}
+
+
