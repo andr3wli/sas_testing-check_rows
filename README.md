@@ -20,6 +20,8 @@ This slide deck was used at the the following talks:
 
 By: [Andrew Li](https://www.andrewcli.com/) & [Mike Atkinson]()
 
+## Relevant links
+
 You can find the slides here:
 <https://andr3wli.github.io/sas_testing-check_rows/>
 
