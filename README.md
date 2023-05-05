@@ -21,11 +21,15 @@ This slide deck was used at the the following talks:
 By: [Andrew Li](https://www.andrewcli.com/) & [Mike Atkinson]()
 
 You can find the slides here:
+<https://andr3wli.github.io/sas_testing-check_rows/>
+
+You can find the source code to `%check_rows` here:
+<https://github.com/andr3wli/testmacrolib>
 
 ## Acknowledgements
 
 SAS syntax highlighting was made possible by
-[https://highlightjs.org/](highlight.js) although I contributed to the
+[highlight.js](https://highlightjs.org/) although I contributed to the
 code by adding coverage for SAS log messages (errors, warnings, and
 notes). The use of icons were made possible by the
 [fontawesome](https://github.com/quarto-ext/fontawesome) quartro
