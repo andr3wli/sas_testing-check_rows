@@ -9,7 +9,6 @@ format:
     slide-number: true
     code-link: true
     preview-links: auto
-    footer: "Source code for these slides can be found on [GitHub]()"
 #editor: visual
 execute:
   echo: true
@@ -716,6 +715,12 @@ After you have downloaded the repo locally (somewhere SAS can access), update th
 ```{eval=FALSE, class='SAS'}
 options insert=(sasautos="/Desktop/testmacrolib/check");
 ```
+
+#
+
+Source code for the **slides** can be found on [GitHub](https://andr3wli.github.io/sas_testing-check_rows/)
+
+Source code for the **macro** can be found on [Github](https://github.com/andr3wli/testmacrolib/blob/main/check/check_rows.sas)
 
 # Find me here 👇
 <!-- Need to install fontawesome extension for quartro: https://github.com/quarto-ext/fontawesome -->
