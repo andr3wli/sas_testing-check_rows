@@ -718,7 +718,7 @@ options insert=(sasautos="/Desktop/testmacrolib/check");
 
 #
 
-Source code for the **slides** can be found on [GitHub](https://andr3wli.github.io/sas_testing-check_rows/)
+Source code for the **slides** can be found on [GitHub](https://github.com/andr3wli/sas_testing-check_rows)
 
 Source code for the **macro** can be found on [Github](https://github.com/andr3wli/testmacrolib/blob/main/check/check_rows.sas)
 
