@@ -80,7 +80,7 @@ There are two main applications of SAS:
 
 ::: {.column width='50%'}
 
-**Standardized and Resuable Programs **
+**Standardized and Reusable Programs **
 
 ::: {.incremental}
 
